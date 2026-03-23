@@ -1,6 +1,6 @@
 ---
-title: "my title"
-author: "Dummy Surname (dummy@upf.edu)"
+title: "DMI: Hands-on Assignment I"
+author: "Rousomanis Athanasios Rafail (athanasiosrafail.rousomanis01@estudiant.upf.edu)"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"      
 output:
   html_document:
@@ -45,7 +45,7 @@ Reproduce Table 1 from the manuscript using the supplementary data. Match the re
 Briefly discuss any discrepancies between your results and the published table, and provide possible explanations.
 
 ```{r, message=FALSE, warning = FALSE}
-# Process the clinical data
+# 1. Process the clinical data
 processed_clin_data <- clin_data %>%
   mutate(
     Group = case_when(
@@ -329,22 +329,19 @@ severe_df %>%
     mean_days = mean(Days_to_severe, na.rm = TRUE),
     sd_days = sd(Days_to_severe, na.rm = TRUE)
   )
-
 ```
+
 We chose to visualize results using violin plots, as they display distributions, as well as allowing to visualize group differences. In many cases, visualization was ambiguous, so we combined both plots and statistics to draw our conclusions.
 
+1.  Age influences severity. Severe group is statistically older than healthy and non-severe groups. But non-severe group is not statistically older than healthy. This matches whats its known of covid in literature.
 
-1. Age influences severity. Severe group is statistically older than healthy and non-severe groups. But non-severe group is not statistically older than healthy. This matches whats its known of covid in literature.
+2.  BMI does not influence severity: Statistical test returned no significant difference. From literature, we know BMI does influence covid risk. If we look at the distribution, we can see most of the data points regardless of group fall in the range considered to be healthy (18.5-24.9). Visually we can see the severe group does have many people above this range, but its peak is still roughly on 25. It is possible, the signal got drowned out by the imbalance because of the overreprentation of people in the healthy range. A more granular approach could reveal a correlation between BMI and severity, but we chose to keep it simple for the sake of the assignment. Caveat: We used median imputation, the peaks we see at roughly 25 could very much be an artifact of it, that influenced our results.
 
-2. BMI does not influence severity: Statistical test returned no significant difference. From literature, we know BMI does influence covid risk. If we look at the distribution, we can see most of the data points regardless of group fall in the range considered to be healthy (18.5-24.9). Visually we can see the severe group does have many people above this range, but its peak is still roughly on 25. It is possible, the signal got drowned out by the imbalance because of the overreprentation of people in the healthy range. A more granular approach could reveal a correlation between BMI and severity, but we chose to keep it simple for the sake of the assignment. Caveat: We used median imputation, the peaks we see at roughly 25 could very much be an artifact of it, that influenced our results.
-
-3. Days from onset to admission, returned a significant difference. Conclusion: People who delayed seeking medical attention, are more likely to develop severe symptoms. This mechanism is logical, many diseases can be treated better when caught early, often being cured before ever reaching a severe state.
+3.  Days from onset to admission, returned a significant difference. Conclusion: People who delayed seeking medical attention, are more likely to develop severe symptoms. This mechanism is logical, many diseases can be treated better when caught early, often being cured before ever reaching a severe state.
 
 4 Days from admission to severe, Male vs Female returned significant. Males in the severe group turned severe faster after admission. This matches a known property of covid, covid is indeed more prone to infect and cause harsher symptoms in men for a couple of reasons (inmune system differences, higher expression of TMPRSS2 in men, and a higher probability of relevant comorbidities in men, like cardiovascular disease, lung diseases, obesity etc.).
 
-Observations: Most p-values are under the 0.05 threshold, but are not very low. It is important to remember 0.05 is a relatively trivial threshold, and a p-value being under or over  it does not always represent true significance. Dataset is relatively small, and many variables are not well balanced, this is a normal constraint in most biological datasets. As the last caveats, for the sake of simplicity, we analyzed each variable, as if they were independent, yet we know they are not. Age influences BMI,Sex influences BMI, covid has comorbidites that were not present in the study (like smoking status) etc. In order to draw more robust results, we should control for confounders and co-variance, yet we didn't for the sake of simplicity.
-
-
+Observations: Most p-values are under the 0.05 threshold, but are not very low. It is important to remember 0.05 is a relatively trivial threshold, and a p-value being under or over it does not always represent true significance. Dataset is relatively small, and many variables are not well balanced, this is a normal constraint in most biological datasets. As the last caveats, for the sake of simplicity, we analyzed each variable, as if they were independent, yet we know they are not. Age influences BMI,Sex influences BMI, covid has comorbidites that were not present in the study (like smoking status) etc. In order to draw more robust results, we should control for confounders and co-variance, yet we didn't for the sake of simplicity.
 
 # Exercise 2
 
@@ -356,14 +353,13 @@ Reproduce Supplementary Figure 1 using the data without modifying or removing an
 library(patchwork)
 library(ggbeeswarm)
 
+# 1. Prepare Data (ensure numeric and factor levels)
 clin_params_data <- processed_clin_data[processed_clin_data$Group %in%
                                           c("Non-COVID-19","Non-severe","Severe"),] %>%
   column_to_rownames("Patient ID a") %>%
   select(18:31) %>% select(-c("Test date...23")) %>%
   mutate(`CRP i, mg/L` = as.numeric(`CRP i, mg/L`))
   
-
-# 1. Prepare Data (ensure numeric and factor levels)
 clin_params_data$Group <- factor(clin_params_data$Group, 
                                  levels = c("Non-COVID-19", "Non-severe", "Severe"))
 
@@ -398,14 +394,14 @@ y_labels <- list(
   "Glucose" = "mmol/L"
 )
 
-
+# Define list for comparisons
 my_comparisons <- list(
   c("Non-COVID-19", "Non-severe"),
   c("Non-severe", "Severe"),
   c("Non-COVID-19", "Severe")
 )
 
-# 2. Refined Plotting Function
+# 2. Define Plotting Function
 create_clin_plot <- function(data, var_col_name) {
   
   # Get display name
@@ -453,11 +449,8 @@ create_clin_plot <- function(data, var_col_name) {
     
     # Dynamic Y-axis: Starts at 0, ends at data max + 10%
     scale_y_continuous(expand = expansion(mult = c(0, 0.10))) +
-    
-    # ALLOW BRACKETS TO EXTEND BEYOND PLOT - KEY CHANGE
     coord_cartesian(clip = "off") +
     
-    # Theme & Styling
     labs(title = display_name, y = y_label, x = NULL) +
     theme_classic() +
     theme(
@@ -484,7 +477,6 @@ plot_list[[1]] <- plot_list[[1]] +
 
 
 # 4. Arrange 4 rows by 3 columns
-# patchwork will maintain the individual scales for each plot automatically
 final_panel <- wrap_plots(plot_list, ncol = 3, nrow = 4, guides = "collect") +
 plot_annotation(
   title = "Figure S1. Twelve Clinical Parameters of COVID-19 Patients and Non-COVID-19 Patients",
@@ -612,13 +604,9 @@ create_clin_plot <- function(data, var_col_name) {
     scale_color_manual(values = c("Non-COVID-19" = "blue", "Non-severe" = "orange", "Severe" = "darkred")) +
     scale_shape_manual(values = c(16, 15, 17)) +
     
-    # REPLACE WITH:
     scale_y_continuous(expand = expansion(mult = c(0, 0.10))) +
-    
-    # ALLOW BRACKETS TO EXTEND BEYOND PLOT - KEY CHANGE
     coord_cartesian(clip = "off") +
     
-    # Theme & Styling
     labs(title = display_name, y = y_label, x = NULL) +
     theme_classic() +
     theme(
@@ -645,7 +633,6 @@ plot_list[[1]] <- plot_list[[1]] +
 
 
 # 4. Arrange 4 rows by 3 columns
-# patchwork will maintain the individual scales for each plot automatically
 final_panel <- wrap_plots(plot_list, ncol = 3, nrow = 4, guides = "collect") +
 plot_annotation(
   title = "Figure S1. Twelve Clinical Parameters of COVID-19 Patients and Non-COVID-19 Patients",
@@ -777,29 +764,27 @@ Sex distribution does not appear to be a strong driver of biomarker patterns!
 
 ------------------------------------------------------------------------
 
-------------------------------------------------------------------------
+**Within-Group Heterogeneity:**
 
-2.  Within-Group Heterogeneity:
+Severe group shows high variability, not all severe patients have identical biomarker profiles Some severe patients show extreme elevations (deep red) in inflammatory markers Some non-severe patients show patterns resembling severe cases (potential misclassification or progression risk?)
 
-Severe group shows high variability - not all severe patients have identical biomarker profiles Some severe patients show extreme elevations (deep red) in inflammatory markers Some non-severe patients show patterns resembling severe cases (potential misclassification or progression risk?)
-
-3.  Disease Severity Gradient:
+**Disease Severity Gradient:**
 
 Non-COVID-19: More uniform pattern, less extreme values Non-severe: Intermediate, relatively stable Severe: Most variability, extreme values in both directions (high inflammation + low immune cells)
 
-4.  No Clear Sex-Related Patterns:
+**Biological Conclusions:**
 
-Biological Conclusions: 1. Coordinated Dysregulation in Severe COVID-19:
+1.  Coordinated Dysregulation in Severe COVID-19:
 
 Severe patients show inverse relationship between:
 
 Immune cell counts (↓ lymphocytes, monocytes) Inflammatory markers (↑ CRP, liver enzymes)
 
-Suggests immunosuppression paired with hyperinflammation - the "cytokine storm" paradox
+Suggests immunosuppression paired with hyperinflammation
 
 2.  Patient Heterogeneity Within Severity Groups:
 
-Not all "Severe" patients are identical Suggests different pathophysiological subtypes or different disease stages Some patients show extreme dysregulation, others more moderate
+Not all "Severe" patients are identical. Suggests different pathophysiological subtypes or different disease stages Some patients show extreme dysregulation, others more moderate
 
 3.  Functional Biomarker Networks:
 
@@ -811,9 +796,8 @@ Some Non-severe patients show biomarker patterns resembling Severe group Could r
 
 ------------------------------------------------------------------------
 
-------------------------------------------------------------------------
-
 # Conclusion
+
 The analysis reveals a systemic dysregulation strongly associated with COVID-19 severity, characterized primarily by the unintuitive pairing of immunosuppression (such as marked lymphopenia) and hyperinflammation (elevated CRP and liver enzymes). Generally, inflammation tends to be associated with elevated immune activity, not suppression. Hierarchical clustering suggests that these biomarkers act in functional networks rather than independently, as they cluster by function. Furthermore, severe cases display a clear severity gradient of extreme values that also includes metabolic disruptions like hyperglycemia. This indicates there might be either a disease gradient or several alternative disease mechanisms at play. All groups, including the severe cohort, show significant heterogeneity but also some degree of structure. This suggests that predicting COVID-19 prognosis and the progression of the disease could be possible by tracking several different disease mechanisms, though it is certainly not simple.
 
 # session info {.unnumbered}
